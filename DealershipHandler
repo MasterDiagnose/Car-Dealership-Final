@@ -30,8 +30,8 @@ local function SetupUI(player)
 end
 
 game.Players.PlayerAdded:Connect(function(player)
-    local Folder = Instance.new("Folder",ServerStorage:WaitForChild("PurchasedVehicles"))
-    Folder.Name = player.UserId
+	local Folder = Instance.new("Folder",ServerStorage:WaitForChild("PurchasedVehicles"))
+	Folder.Name = player.UserId
 	player.CharacterAdded:Connect(function(character)
 		SetupUI(player)
 	end)
@@ -47,10 +47,11 @@ ReplicatedStorage.CarDealershipEvent.GetCars.OnServerEvent:Connect(function(play
 	if Vehicles then
 		for i, v in pairs(Vehicles:GetChildren()) do
 			if not CarListUI:FindFirstChild(v.Name) then
+				local carInfo = CarListModule.GetCarInfo(v.Name)
 				local CloneTemplate = Template:Clone()
 				CloneTemplate.Name = v.Name
-				CloneTemplate.VehicleName.Text = v.VehicleName.Value
-				CloneTemplate.VehicleImage.Image = v.VehicleImage.Value
+				CloneTemplate.VehicleName.Text = carInfo.Name
+				CloneTemplate.VehicleImage.Image = carInfo.Image
 				CloneTemplate.Visible = true
 				CloneTemplate.Parent = CarListUI
 			end
