@@ -1,0 +1,59 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+local CarListModule = require(game.ServerScriptService.VehiclesList)
+
+
+local function SetupUI(player)
+	local DealershipUI = player.PlayerGui:WaitForChild("DealershipUI")
+	local CarListUI = DealershipUI.Frame.CarList
+
+	local Template = ReplicatedStorage.Template
+	local Vehicles = ServerStorage:WaitForChild("Vehicles")
+
+	if Vehicles then
+		for i, v in pairs(Vehicles:GetChildren()) do
+			local carInfo = CarListModule.GetCarInfo(v.Name)
+			if carInfo then
+				local CloneTemplate = Template:Clone()
+				CloneTemplate.Name = v.Name
+				CloneTemplate.VehicleName.Text = carInfo.Name
+				CloneTemplate.VehicleImage.Image = carInfo.Image
+				CloneTemplate.Price.Value = carInfo.Price
+				CloneTemplate.Visible = true
+				CloneTemplate.Parent = CarListUI
+			else
+				warn("Car information not found for vehicle:", v.Name)
+			end
+		end
+	end
+
+end
+
+game.Players.PlayerAdded:Connect(function(player)
+    local Folder = Instance.new("Folder",ServerStorage:WaitForChild("PurchasedVehicles"))
+    Folder.Name = player.UserId
+	player.CharacterAdded:Connect(function(character)
+		SetupUI(player)
+	end)
+end)
+
+ReplicatedStorage.CarDealershipEvent.GetCars.OnServerEvent:Connect(function(player)
+	local CarSpawnerUI = player.PlayerGui:WaitForChild("VehicleSpawner")
+	local CarListUI = CarSpawnerUI.Frame.CarList
+
+	local Template = CarSpawnerUI.Frame.Template
+	local Vehicles = ServerStorage:WaitForChild("PurchasedVehicles"):FindFirstChild(player.UserId)
+
+	if Vehicles then
+		for i, v in pairs(Vehicles:GetChildren()) do
+			if not CarListUI:FindFirstChild(v.Name) then
+				local CloneTemplate = Template:Clone()
+				CloneTemplate.Name = v.Name
+				CloneTemplate.VehicleName.Text = v.VehicleName.Value
+				CloneTemplate.VehicleImage.Image = v.VehicleImage.Value
+				CloneTemplate.Visible = true
+				CloneTemplate.Parent = CarListUI
+			end
+		end
+	end
+end)
