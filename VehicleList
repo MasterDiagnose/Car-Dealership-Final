@@ -1,0 +1,20 @@
+local VehiclesList = {}
+
+local cars = {
+	{ Id = "Car1", Name = "Car Name", Price = 0, Image = "http://www.roblox.com/asset/?id=6147451480"},
+}
+
+function VehiclesList.GetCarInfo(carId)
+	for _, car in ipairs(cars) do
+		if car.Id == carId then
+			return car
+		end
+	end
+	return nil  
+end
+
+function VehiclesList.GetAllCars()
+	return cars
+end
+
+return VehiclesList
