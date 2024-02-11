@@ -1,0 +1,83 @@
+local DataStoreService = game:GetService("DataStoreService")
+local PlayerDataStore = DataStoreService:GetDataStore("AgainNewDatatFortTrestingasd")
+local CarListModule = require(game.ServerScriptService.VehiclesList)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+
+local function DeductMoney(player, price)
+	local money = player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Money")
+	if money then
+		if money.Value >= price then
+			money.Value = money.Value - price
+			return true  
+		else
+			warn("Player doesn't have enough money.")
+			return false  
+		end
+	else
+		warn("Player's money data not found.")
+		return false  
+	end
+end
+
+function PurchaseCar(player, carId)
+	local PlayerOwnedCarsFolder = ServerStorage.PurchasedVehicles:WaitForChild(player.UserId)
+	local Vehicles = ServerStorage.Vehicles
+
+	local carInfo = CarListModule.GetCarInfo(carId)
+	if not carInfo then
+		return false, "Invalid car ID"
+	end
+
+	if PlayerOwnedCarsFolder:FindFirstChild(carId) then
+		return false, print("Player own's Vehicle")
+	end
+
+	local success, err = DeductMoney(player, carInfo.Price)
+	if not success then
+		return false, err
+	end
+
+	local playerKey = "Player_" .. player.UserId
+	local playerData = PlayerDataStore:GetAsync(playerKey) or {}
+	playerData.PurchasedCars = playerData.PurchasedCars or {}
+	table.insert(playerData.PurchasedCars, carId)
+
+	PlayerDataStore:SetAsync(playerKey, playerData)
+    print("Player Purchased Car",carInfo.Name)
+  
+	local carToClone = ServerStorage.Vehicles:FindFirstChild(carId)
+	if carToClone then
+        carToClone:Clone().Parent = PlayerOwnedCarsFolder
+		else
+        warn("No vehicle found")
+	end
+
+	return true, "Car purchased successfully"
+end
+
+function LoadPurchasedCars(player)
+	local playerKey = "Player_" .. player.UserId
+	local playerData = PlayerDataStore:GetAsync(playerKey)
+	
+	local Vehicles = ServerStorage.Vehicles
+	local PlayersOwnedFolder = ServerStorage.PurchasedVehicles:WaitForChild(player.UserId)
+
+	if playerData and playerData.PurchasedCars then
+		for _, carId in ipairs(playerData.PurchasedCars) do
+			print("Loaded: "..carId)
+			Vehicles:FindFirstChild(carId):Clone().Parent = PlayersOwnedFolder
+		end
+	end
+end
+
+game.Players.PlayerAdded:Connect(function(player)
+	if player then
+		LoadPurchasedCars(player)
+	end
+end)
+
+ReplicatedStorage.CarDealershipEvent.PurchaseEvent.OnServerEvent:Connect(function(player, VehicleName)
+	PurchaseCar(player, VehicleName)
+end)
+
